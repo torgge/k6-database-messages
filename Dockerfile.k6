@@ -1,0 +1,65 @@
+# Builder stage
+FROM golang:1.24.3-alpine AS builder
+
+USER root
+
+# Install git for xk6 (it might use git to clone extension repos)
+RUN apk update && apk add --no-cache git
+
+# Install xk6 itself
+RUN go install go.k6.io/xk6/cmd/xk6@latest
+
+WORKDIR /build
+
+# Build k6 with all desired extensions in a single command
+# NOTE: github.com/grafana/xk6-amqp is archived and removed from this example.
+RUN xk6 build \
+    --with github.com/grafana/xk6-sql@latest \
+    --with github.com/grafana/xk6-sql-driver-postgres@latest \
+    --with github.com/mostafa/xk6-kafka@latest \
+    --with github.com/grafana/xk6-amqp
+
+# Final image
+FROM alpine:3.21
+
+# Install ca-certificates for secure connections (HTTPS, etc.)
+RUN apk add --no-cache ca-certificates
+
+# Copy the built k6 binary from the builder stage
+COPY --from=builder /build/k6 /usr/bin/k6
+
+# Set environment variables for the K6 script (these are defaults, can be overridden by docker-compose)
+ENV PG_HOST=postgres
+ENV PG_PORT=5432
+ENV PG_USER=myuser
+ENV PG_PASSWORD=mypassword
+ENV PG_DATABASE=mydatabase
+ENV KAFKA_BROKERS=kafka:9092
+
+# Create the directory for results and set its permissions
+RUN mkdir -p /k6/results && chmod a+rwx /k6/results
+
+WORKDIR /k6
+
+# Copy the k6 script into the container
+COPY ./k6/k6-script.js /k6/k6-script.js
+COPY ./k6/k6-postgres.js /k6/k6-postgres.js
+
+# Declare the volume for results
+VOLUME ["/k6/results"]
+
+# Set the entrypoint to the k6 binary
+ENTRYPOINT ["k6"]
+
+# Set the default command if none is provided (e.g., for `docker run my-k6-image`)
+CMD ["run", "/k6/k6-postgres.js"]
+
+# Expose any necessary ports (e.g., for Prometheus metrics or web UI if enabled)
+EXPOSE 6566 
+
+# Healthcheck (consider if your test is short-lived, otherwise this might fail before test finishes)
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+  CMD k6 status || exit 1
+
+# Metadata for image
+LABEL description="K6 performance testing image with SQL (PostgreSQL) and Kafka extensions."

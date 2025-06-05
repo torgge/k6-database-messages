@@ -1,0 +1,169 @@
+name: kafka-postgres-k6
+
+volumes:
+  kafka_data:
+    driver: local
+  # Explicitly define the k6 results volume for clarity
+  k6_results:
+    driver: local 
+
+services:
+  kafka:
+    image: bitnami/kafka:4.0.0
+    container_name: kafka
+    hostname: kafka
+    ports:
+      - "9092:9092" # For host access to PLAINTEXT listener
+      - "9094:9094" # For host access to EXTERNAL listener
+    volumes:
+      - "kafka_data:/bitnami"
+    environment:
+      - KAFKA_ENABLE_KRAFT=yes
+      - KAFKA_CFG_PROCESS_ROLES=broker,controller
+      - KAFKA_CFG_CONTROLLER_LISTENER_NAMES=CONTROLLER
+      # Corrected LISTENERS and ADVERTISED_LISTENERS for proper inter-container and host access
+      - KAFKA_CFG_LISTENERS=PLAINTEXT://:9092,CONTROLLER://:9093,EXTERNAL://:9094
+      - KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP=CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,EXTERNAL:PLAINTEXT
+      # IMPORTANT: If k6 connects via kafka:9092, then PLAINTEXT should be advertised as kafka:9092
+      # If your host connects via 127.0.0.1:9092, then PLAINTEXT should be advertised with host's IP/hostname,
+      # or 127.0.0.1 if only for internal host access.
+      # For simplicity and inter-container communication, we assume k6 uses kafka:9092.
+      - KAFKA_CFG_ADVERTISED_LISTENERS=PLAINTEXT://kafka:9092,EXTERNAL://kafka:9094
+      - KAFKA_BROKER_ID=1 # Corrected typo: kafkaROKER_ID -> KAFKA_BROKER_ID
+      - KAFKA_CFG_CONTROLLER_QUORUM_VOTERS=1@127.0.0.1:9093 # Assumes single node
+      - ALLOW_PLAINTEXT_LISTENER=yes
+      - KAFKA_CFG_NODE_ID=1
+      - KAFKA_AUTO_CREATE_TOPICS_ENABLE=true
+      - KAFKA_CFG_NUM_PARTITIONS=2
+    healthcheck:
+      # Use full path for robustness
+      test: ["CMD", "/opt/bitnami/kafka/bin/kafka-topics.sh", "--bootstrap-server", "localhost:9092", "--list"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s # Give Kafka more time to start up
+    networks:
+      - app_network # Use a common network
+
+  postgres:
+    image: postgres:16-alpine
+    container_name: postgres
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: mydatabase
+      POSTGRES_USER: dev # Using 'dev' user as in your original file
+      POSTGRES_PASSWORD: dev # Using 'dev' password as in your original file
+    volumes:
+      - ./data/init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U dev -d mydatabase"] # Use 'dev' user for healthcheck
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - app_network
+
+  kafka-ui:
+    container_name: kafka-ui
+    image: provectuslabs/kafka-ui:latest
+    depends_on: 
+      - kafka
+    ports:
+      - 8080:8080
+    environment:
+      DYNAMIC_CONFIG_ENABLED: 'true'
+      # Configure Kafka-UI to connect to Kafka's advertised listeners
+      KAFKA_CLUSTERS_0_NAME: 'local-kafka'
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: 'kafka:9092' # Connect via the PLAINTEXT listener for UI
+      # KAFKA_CLUSTERS_0_SCHEMAREGISTRY: 'http://schema-registry:8081' # Uncomment if you want Schema Registry integration
+    networks:
+      - app_network
+
+  rest-proxy:
+    image: confluentinc/cp-kafka-rest:latest
+    depends_on:
+      - kafka
+    ports:
+      - 8082:8082
+    hostname: rest-proxy
+    container_name: rest-proxy
+    environment:
+      KAFKA_REST_HOST_NAME: rest-proxy
+      KAFKA_REST_BOOTSTRAP_SERVERS: 'kafka:9094' # Connects to Kafka's EXTERNAL listener
+      KAFKA_REST_LISTENERS: "http://0.0.0.0:8082"
+    networks:
+      - app_network
+
+  schema-registry:
+    image: confluentinc/cp-schema-registry:latest
+    hostname: schema-registry
+    depends_on:
+      - kafka
+    ports:
+      - "8081:8081"
+    environment:
+      SCHEMA_REGISTRY_HOST_NAME: schema-registry
+      # Connect to the correct Kafka listener advertised for Schema Registry
+      SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS: PLAINTEXT://kafka:9094
+    networks:
+      - app_network
+
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    hostname: rabbitmq
+    container_name: rabbitmq
+    ports:
+      - "5672:5672" # AMQP port
+      - "15672:15672" # Management UI
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "check_port_connectivity"]
+      interval: 5s
+      timeout: 10s
+      retries: 5
+      start_period: 10s
+    networks:
+      - app_network
+
+  k6:
+    build:
+      context: .
+      dockerfile: Dockerfile.k6 # Ensure this path is correct relative to docker-compose.yml
+    container_name: k6
+    # Mount the 'k6' directory to '/k6' inside the container
+    volumes:
+      - ./k6:/k6
+      # Mount the named volume for k6 results
+      - k6_results:/k6/results 
+    environment:
+      # K6_SCRIPT env var is good for reference, but command uses the direct path
+      # Make sure these match your PostgreSQL credentials (dev/dev from postgres service)
+      PG_HOST: postgres
+      PG_PORT: 5432
+      PG_USER: dev 
+      PG_PASSWORD: dev 
+      PG_DATABASE: mydatabase
+      # Corrected typo: kafkaROKERS -> KAFKA_BROKERS
+      KAFKA_BROKERS: kafka:9092 # K6 connects to Kafka via its service name and PLAINTEXT listener
+      KAFKA_TOPIC: my_topic
+      # RabbitMQ URL for k6 (if your k6 script uses xk6-amqp, which is a known issue)
+      RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672/ 
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy # Ensure RabbitMQ is healthy before k6 starts
+    # Corrected command to run the k6 script using its full path inside the container
+    command: run /k6/k6-postgres.js --summary-export=/k6/results/summary.json
+    networks:
+      - app_network
+
+networks:
+  app_network:
+    driver: bridge
