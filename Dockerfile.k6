@@ -17,7 +17,7 @@ RUN xk6 build \
     --with github.com/grafana/xk6-sql@latest \
     --with github.com/grafana/xk6-sql-driver-postgres@latest \
     --with github.com/mostafa/xk6-kafka@latest \
-    --with github.com/grafana/xk6-amqp
+    --with github.com/grafana/xk6-amqp@latest
 
 # Final image
 FROM alpine:3.21
@@ -52,14 +52,15 @@ VOLUME ["/k6/results"]
 ENTRYPOINT ["k6"]
 
 # Set the default command if none is provided (e.g., for `docker run my-k6-image`)
-CMD ["run", "/k6/k6-postgres.js"]
+CMD ["run", "extensions", "list"]
 
 # Expose any necessary ports (e.g., for Prometheus metrics or web UI if enabled)
-EXPOSE 6566 
+EXPOSE 6566
 
 # Healthcheck (consider if your test is short-lived, otherwise this might fail before test finishes)
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-  CMD k6 status || exit 1
+
+CMD k6 status || exit 1
 
 # Metadata for image
 LABEL description="K6 performance testing image with SQL (PostgreSQL) and Kafka extensions."
