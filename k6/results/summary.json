@@ -1,0 +1,62 @@
+{
+    "root_group": {
+        "name": "",
+        "path": "",
+        "id": "d41d8cd98f00b204e9800998ecf8427e",
+        "groups": {},
+        "checks": {}
+    },
+    "metrics": {
+        "publish_duration": {
+            "avg": 473.10833333333335,
+            "min": 377,
+            "med": 471.5,
+            "max": 545,
+            "p(90)": 515,
+            "p(95)": 532.05,
+            "thresholds": {
+                "p(95)<500": true
+            }
+        },
+        "checks": {
+            "fails": 0,
+            "passes": 0,
+            "thresholds": {
+                "rate==1": false
+            },
+            "value": 0
+        },
+        "data_sent": {
+            "count": 0,
+            "rate": 0
+        },
+        "data_received": {
+            "count": 0,
+            "rate": 0
+        },
+        "iteration_duration": {
+            "avg": 526.1824733316669,
+            "min": 402.476084,
+            "med": 533.1046875,
+            "max": 549.934251,
+            "p(90)": 542.5380131000001,
+            "p(95)": 544.5315545,
+            "thresholds": {
+                "p(95)<1000": false
+            }
+        },
+        "iterations": {
+            "rate": 1070.1198244379252,
+            "count": 600,
+            "thresholds": {
+                "count == 100": true
+            }
+        }
+    },
+    "setup_data": {
+        "exchangeName": "my_k6_exchange_760",
+        "queueName": "my_k6_queue_719",
+        "routingKey": "my_k6_routing_key_58",
+        "url": "amqp://guest:guest@rabbitmq-k6:5672/"
+    }
+}

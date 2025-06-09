@@ -138,7 +138,7 @@ services:
     volumes:
       - ./k6:/k6
       # Mount the named volume for k6 results
-      - k6_results:/k6/results
+      - ./k6/results:/k6/results
     environment:
       # K6_SCRIPT env var is good for reference, but command uses the direct path
       # Make sure these match your PostgreSQL credentials (dev/dev from postgres service)
@@ -160,7 +160,7 @@ services:
       rabbitmq-k6:
         condition: service_healthy # Ensure RabbitMQ is healthy before k6 starts
     # Corrected command to run the k6 script using its full path inside the container
-    command: run /k6/k6-rabbitmq.js --summary-export=/k6/results/summary.json
+    command: run /k6/k6-rabbitmq.js --summary-export=/k6/results/summary.json --out json=/k6/results/output.json
     networks:
       - app_network
 
