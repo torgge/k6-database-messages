@@ -129,11 +129,11 @@ services:
     networks:
       - app_network
 
-  k6:
+  k6-rabbitmq:
     build:
       context: .
-      dockerfile: Dockerfile.k6 # Ensure this path is correct relative to docker-compose.yml
-    container_name: k6
+      dockerfile: Dockerfile.k6-rabbitmq # Ensure this path is correct relative to docker-compose.yml
+    container_name: k6-rabbitmq
     # Mount the 'k6' directory to '/k6' inside the container
     volumes:
       - ./k6:/k6
@@ -164,6 +164,38 @@ services:
     networks:
       - app_network
 
+  k6-kafka:
+    build:
+      context: .
+      dockerfile: Dockerfile.k6-kafka # Ensure this path is correct relative to docker-compose.yml
+    container_name: k6-kafka
+    # Mount the 'k6' directory to '/k6' inside the container
+    volumes:
+      # Mount the named volume for k6 results
+      - ./k6/kafka/results:/k6/results
+    environment:
+      # K6_SCRIPT env var is good for reference, but command uses the direct path
+      # Make sure these match your PostgreSQL credentials (dev/dev from postgres service)
+      PG_HOST: postgres-k6
+      PG_PORT: 5432
+      PG_USER: dev
+      PG_PASSWORD: dev
+      PG_DATABASE: mydatabase
+      # Corrected typo: kafka BROKERS -> KAFKA_BROKERS
+      KAFKA_BROKER: kafka-k6:9092 # K6 connects to Kafka via its service name and PLAINTEXT listener
+      KAFKA_TOPIC: my_topic
+      SCHEMA_REGISTRY_URL: http://schema-registry-k6:8081
+    depends_on:
+      # postgres-k6:
+      #   condition: service_healthy
+      kafka-k6:
+        condition: service_healthy
+      rabbitmq-k6:
+        condition: service_healthy # Ensure RabbitMQ is healthy before k6 starts
+    # Corrected command to run the k6 script using its full path inside the container
+    command: run k6-script.js --summary-export=/k6/results/summary.json --out json=/k6/results/output.json
+    networks:
+      - app_network
 
 networks:
   app_network:

@@ -1,0 +1,248 @@
+{
+    "root_group": {
+        "name": "",
+        "path": "",
+        "id": "d41d8cd98f00b204e9800998ecf8427e",
+        "groups": {},
+        "checks": {
+                "20 message returned": {
+                    "fails": 0,
+                    "name": "20 message returned",
+                    "path": "::20 message returned",
+                    "id": "e22afdd63e0bea9890399c72ee1949e9",
+                    "passes": 1
+                },
+                "key starts with 'ssn-' string": {
+                    "name": "key starts with 'ssn-' string",
+                    "path": "::key starts with 'ssn-' string",
+                    "id": "57d6888338cc3ea1e7088ab65ce8c2e0",
+                    "passes": 1,
+                    "fails": 0
+                },
+                "value contains 'firstName-' and 'lastName-' strings": {
+                    "name": "value contains 'firstName-' and 'lastName-' strings",
+                    "path": "::value contains 'firstName-' and 'lastName-' strings",
+                    "id": "da5bef3bf7776a3e046a97fb3c1fe0d6",
+                    "passes": 1,
+                    "fails": 0
+                }
+            }
+    },
+    "metrics": {
+        "kafka_writer_acks_required": {
+            "value": 0,
+            "min": 0,
+            "max": 0
+        },
+        "kafka_reader_message_bytes": {
+            "count": 4260,
+            "rate": 9860.545225376789
+        },
+        "checks": {
+            "passes": 3,
+            "fails": 0,
+            "value": 1
+        },
+        "kafka_writer_batch_size": {
+            "count": 5000,
+            "rate": 11573.409888939892
+        },
+        "kafka_reader_read_seconds": {
+            "p(90)": 0,
+            "p(95)": 0,
+            "avg": 0,
+            "min": 0,
+            "med": 0,
+            "max": 0
+        },
+        "kafka_reader_fetches_count": {
+            "count": 1,
+            "rate": 2.3146819777879784
+        },
+        "kafka_reader_rebalance_count": {
+            "count": 0,
+            "rate": 0
+        },
+        "kafka_writer_write_count": {
+            "count": 5000,
+            "rate": 11573.409888939892
+        },
+        "kafka_reader_fetch_bytes_min": {
+            "value": 1,
+            "min": 1,
+            "max": 1
+        },
+        "kafka_writer_attempts_max": {
+            "value": 10,
+            "min": 10,
+            "max": 10
+        },
+        "kafka_writer_wait_seconds": {
+            "avg": 0,
+            "min": 0,
+            "med": 0,
+            "max": 0,
+            "p(90)": 0,
+            "p(95)": 0
+        },
+        "kafka_reader_lag": {
+            "value": 1164,
+            "min": 1164,
+            "max": 1164
+        },
+        "kafka_reader_fetch_size": {
+            "count": 0,
+            "rate": 0
+        },
+        "kafka_reader_fetch_bytes": {
+            "count": 0,
+            "rate": 0
+        },
+        "kafka_writer_read_timeout": {
+            "value": 10000,
+            "min": 10000,
+            "max": 10000
+        },
+        "kafka_writer_write_seconds": {
+            "min": 0.003916,
+            "med": 0.007542,
+            "max": 3.87975,
+            "p(90)": 0.015292,
+            "p(95)": 0.020960099999999992,
+            "avg": 0.01279060359999997
+        },
+        "kafka_reader_fetch_bytes_max": {
+            "value": 1000000,
+            "min": 1000000,
+            "max": 1000000
+        },
+        "kafka_reader_fetch_wait_max": {
+            "value": 10000,
+            "min": 10000,
+            "max": 10000
+        },
+        "data_sent": {
+            "count": 0,
+            "rate": 0
+        },
+        "kafka_writer_retries_count": {
+            "count": 0,
+            "rate": 0
+        },
+        "data_received": {
+            "count": 0,
+            "rate": 0
+        },
+        "kafka_writer_error_count": {
+            "count": 0,
+            "rate": 0
+        },
+        "kafka_reader_dial_seconds": {
+            "p(95)": 4.175584,
+            "avg": 4.175584,
+            "min": 4.175584,
+            "med": 4.175584,
+            "max": 4.175584,
+            "p(90)": 4.175584
+        },
+        "kafka_reader_queue_capacity": {
+            "value": 100,
+            "min": 100,
+            "max": 100
+        },
+        "kafka_writer_async": {
+            "passes": 0,
+            "fails": 5000,
+            "value": 0
+        },
+        "kafka_writer_batch_timeout": {
+            "max": 1000,
+            "value": 1000,
+            "min": 1000
+        },
+        "kafka_reader_timeouts_count": {
+            "count": 0,
+            "rate": 0
+        },
+        "kafka_reader_wait_seconds": {
+            "max": 3.178375,
+            "p(90)": 3.178375,
+            "p(95)": 3.178375,
+            "avg": 3.178375,
+            "min": 3.178375,
+            "med": 3.178375
+        },
+        "kafka_reader_offset": {
+            "value": 101,
+            "min": 101,
+            "max": 101
+        },
+        "kafka_writer_batch_queue_seconds": {
+            "avg": 0.043679307399999985,
+            "min": 0,
+            "med": 0,
+            "max": 2.8948,
+            "p(90)": 0.072875,
+            "p(95)": 0.40698195
+        },
+        "kafka_writer_write_timeout": {
+            "value": 10000,
+            "min": 10000,
+            "max": 10000
+        },
+        "kafka_reader_queue_length": {
+            "value": 82,
+            "min": 82,
+            "max": 82
+        },
+        "iteration_duration": {
+            "p(95)": 417.187084,
+            "avg": 417.187084,
+            "min": 417.187084,
+            "med": 417.187084,
+            "max": 417.187084,
+            "p(90)": 417.187084
+        },
+        "kafka_writer_batch_bytes": {
+            "count": 351670,
+            "rate": 814004.2111286984
+        },
+        "kafka_reader_message_count": {
+            "count": 102,
+            "rate": 236.0975617343738
+        },
+        "kafka_reader_dial_count": {
+            "count": 1,
+            "rate": 2.3146819777879784
+        },
+        "iterations": {
+            "count": 1,
+            "rate": 2.3146819777879784
+        },
+        "kafka_writer_message_bytes": {
+            "count": 351670,
+            "rate": 814004.2111286984
+        },
+        "kafka_writer_batch_max": {
+            "value": 1,
+            "min": 1,
+            "max": 1
+        },
+        "kafka_reader_error_count": {
+            "count": 0,
+            "rate": 0
+        },
+        "kafka_writer_message_count": {
+            "count": 5000,
+            "rate": 11573.409888939892
+        },
+        "kafka_writer_batch_seconds": {
+            "min": 0.001,
+            "med": 0.0017295000000000001,
+            "max": 2.057791,
+            "p(90)": 0.003709,
+            "p(95)": 0.006,
+            "avg": 0.0043732477999999094
+        }
+    }
+}

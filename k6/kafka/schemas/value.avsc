@@ -1,0 +1,15 @@
+{
+  "name": "ValueSchema",
+  "type": "record",
+  "namespace": "com.example.value",
+  "fields": [
+    {
+      "name": "firstName",
+      "type": "string"
+    },
+    {
+      "name": "lastName",
+      "type": "string"
+    }
+  ]
+}

@@ -1,4 +1,10 @@
 {
+    "setup_data": {
+        "exchangeName": "my_k6_exchange_487",
+        "queueName": "my_k6_queue_29",
+        "routingKey": "my_k6_routing_key_273",
+        "url": "amqp://guest:guest@rabbitmq-k6:5672/"
+    },
     "root_group": {
         "name": "",
         "path": "",
@@ -7,24 +13,42 @@
         "checks": {}
     },
     "metrics": {
-        "publish_duration": {
-            "avg": 473.10833333333335,
-            "min": 377,
-            "med": 471.5,
-            "max": 545,
-            "p(90)": 515,
-            "p(95)": 532.05,
-            "thresholds": {
-                "p(95)<500": true
-            }
-        },
         "checks": {
-            "fails": 0,
             "passes": 0,
+            "fails": 0,
             "thresholds": {
                 "rate==1": false
             },
             "value": 0
+        },
+        "iteration_duration": {
+            "min": 752.793168,
+            "med": 854.060959,
+            "max": 882.071834,
+            "p(90)": 876.347243,
+            "p(95)": 878.7225138,
+            "avg": 844.6689102383324,
+            "thresholds": {
+                "p(95)<1000": false
+            }
+        },
+        "iterations": {
+            "count": 600,
+            "rate": 664.29173072847,
+            "thresholds": {
+                "count == 100": true
+            }
+        },
+        "publish_duration": {
+            "med": 734.5,
+            "max": 878,
+            "p(90)": 854.1,
+            "p(95)": 862,
+            "avg": 755.4283333333333,
+            "min": 558,
+            "thresholds": {
+                "p(95)<500": true
+            }
         },
         "data_sent": {
             "count": 0,
@@ -33,30 +57,6 @@
         "data_received": {
             "count": 0,
             "rate": 0
-        },
-        "iteration_duration": {
-            "avg": 526.1824733316669,
-            "min": 402.476084,
-            "med": 533.1046875,
-            "max": 549.934251,
-            "p(90)": 542.5380131000001,
-            "p(95)": 544.5315545,
-            "thresholds": {
-                "p(95)<1000": false
-            }
-        },
-        "iterations": {
-            "rate": 1070.1198244379252,
-            "count": 600,
-            "thresholds": {
-                "count == 100": true
-            }
         }
-    },
-    "setup_data": {
-        "exchangeName": "my_k6_exchange_760",
-        "queueName": "my_k6_queue_719",
-        "routingKey": "my_k6_routing_key_58",
-        "url": "amqp://guest:guest@rabbitmq-k6:5672/"
     }
 }
