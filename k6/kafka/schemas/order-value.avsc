@@ -1,0 +1,24 @@
+{
+  "type": "record",
+  "name": "value",
+  "namespace": "com.bonespirito.v1.order",
+  "fields": [
+    { "name": "id", "type": "long" },
+    { "name": "clientName", "type": "string" },
+    {
+      "name": "items",
+      "type": {
+        "type": "array",
+        "items": {
+          "type": "record",
+          "name": "ProductItem",
+          "fields": [
+            { "name": "sku", "type": "string" },
+            { "name": "productName", "type": "string" },
+            { "name": "quantity", "type": "int" }
+          ]
+        }
+      }
+    }
+  ]
+}

@@ -49,8 +49,8 @@ WORKDIR /k6
 RUN mkdir -p /k6/schemas && chmod a+rwx /k6/schemas
 
 # Copy the k6 script into the container
-COPY ./k6/kafka/schemas/*.avsc /k6/schemas
-COPY ./k6/kafka/k6-kafka-v2.js /k6/k6-script.js
+COPY ./k6/kafka/schemas/*.avsc /k6/schemas/
+COPY ./k6/kafka/k6-kafka.js /k6/k6-script.js
 
 # Declare the volume for results
 VOLUME ["/results"]

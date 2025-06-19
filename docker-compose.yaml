@@ -55,7 +55,7 @@ services:
       POSTGRES_USER: dev # Using 'dev' user as in your original file
       POSTGRES_PASSWORD: dev # Using 'dev' password as in your original file
     volumes:
-      - ./data/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./postgres/init.sql:/docker-entrypoint-initdb.d/init.sql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U dev -d mydatabase"] # Use 'dev' user for healthcheck
       interval: 5s
@@ -65,11 +65,32 @@ services:
     networks:
       - app_network
 
+  pgadmin-k6:
+    image: dpage/pgadmin4:latest
+    container_name: pgadmin-k6
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@admin.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+      PGADMIN_LISTEN_PORT: 80
+    volumes:
+      - ./pgadmin/servers.json:/pgadmin4/servers.json # Ensure this file exists and is correctly formatted
+    ports:
+      - "5050:80"
+    depends_on:
+      postgres-k6:
+        condition: service_healthy
+    networks:
+      - app_network
+
   kafka-ui-k6:
     container_name: kafka-ui-k6
     image: provectuslabs/kafka-ui:latest
     depends_on:
-      - kafka-k6
+      kafka-k6:
+        condition: service_healthy
+      schema-registry-k6:
+        condition: service_healthy
     ports:
       - 8080:8080
     environment:
@@ -77,7 +98,7 @@ services:
       # Configure Kafka-UI to connect to Kafka's advertised listeners
       KAFKA_CLUSTERS_0_NAME: 'local-kafka'
       KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: 'kafka-k6:9092' # Connect via the PLAINTEXT listener for UI
-      # KAFKA_CLUSTERS_0_SCHEMAREGISTRY: 'http://schema-registry:8081' # Uncomment if you want Schema Registry integration
+      KAFKA_CLUSTERS_0_SCHEMAREGISTRY: 'http://schema-registry-k6:8081' # Uncomment if you want Schema Registry integration
     networks:
       - app_network
 
@@ -100,7 +121,8 @@ services:
     image: confluentinc/cp-schema-registry:latest
     hostname: schema-registry-k6
     depends_on:
-      - kafka-k6
+      kafka-k6:
+        condition: service_healthy
     ports:
       - "8081:8081"
     environment:
@@ -109,6 +131,12 @@ services:
       SCHEMA_REGISTRY_KAFKASTORE_BOOTSTRAP_SERVERS: PLAINTEXT://kafka-k6:9094
     networks:
       - app_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8081/subjects"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
 
   rabbitmq-k6:
     image: rabbitmq:3-management-alpine
@@ -183,7 +211,7 @@ services:
       PG_DATABASE: mydatabase
       # Corrected typo: kafka BROKERS -> KAFKA_BROKERS
       KAFKA_BROKER: kafka-k6:9092 # K6 connects to Kafka via its service name and PLAINTEXT listener
-      KAFKA_TOPIC: my_topic
+      KAFKA_TOPIC: com.bonespirito.v1.order
       SCHEMA_REGISTRY_URL: http://schema-registry-k6:8081
     depends_on:
       # postgres-k6:

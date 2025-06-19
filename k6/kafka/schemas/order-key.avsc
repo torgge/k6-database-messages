@@ -1,0 +1,11 @@
+{
+  "name": "Key",
+  "type": "record",
+  "fields": [
+    {
+      "name": "key",
+      "type": "string",
+      "doc": "A key."
+    }
+  ]
+} 
