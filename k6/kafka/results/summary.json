@@ -24,7 +24,7 @@
                     "path": "::value contains 'clientName-' and 'productName-' strings",
                     "id": "e7502c0d7d6bf4679839a9bb50824008",
                     "passes": 446,
-                    "fails": 0
+                    "fails": 1
                 }
             }
     },
