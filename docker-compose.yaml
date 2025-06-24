@@ -34,7 +34,7 @@ services:
       - ALLOW_PLAINTEXT_LISTENER=yes
       - KAFKA_CFG_NODE_ID=1
       - KAFKA_AUTO_CREATE_TOPICS_ENABLE=true
-      - KAFKA_CFG_NUM_PARTITIONS=2
+      - KAFKA_CFG_NUM_PARTITIONS=5 # Default number of partitions for new topics
     healthcheck:
       # Use full path for robustness
       test: ["CMD", "/opt/bitnami/kafka/bin/kafka-topics.sh", "--bootstrap-server", "localhost:9092", "--list"]
@@ -201,6 +201,9 @@ services:
     volumes:
       # Mount the named volume for k6 results
       - ./k6/kafka/results:/k6/results
+    ports:
+      - "5665:5665" # Expose port for k6 dashboard
+      - "6566:6566" # Expose port for k6 metrics
     environment:
       # K6_SCRIPT env var is good for reference, but command uses the direct path
       # Make sure these match your PostgreSQL credentials (dev/dev from postgres service)
@@ -221,7 +224,7 @@ services:
       rabbitmq-k6:
         condition: service_healthy # Ensure RabbitMQ is healthy before k6 starts
     # Corrected command to run the k6 script using its full path inside the container
-    command: run k6-script.js --summary-export=/k6/results/summary.json --out json=/k6/results/output.json
+    command: run --summary-export=/k6/results/summary.json --out dashboard=export=/k6/results/test-report.html --out json=/k6/results/output.json k6-script.js
     networks:
       - app_network
 

@@ -1,5 +1,6 @@
 {
-  "name": "Key",
+  "name": "OrderKey",
+  "namespace": "com.bonespirito.selling.order",
   "type": "record",
   "fields": [
     {
@@ -8,4 +9,4 @@
       "doc": "A key."
     }
   ]
-} 
+}

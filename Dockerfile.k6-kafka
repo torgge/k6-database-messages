@@ -43,14 +43,17 @@ ENV SCHEMA_REGISTRY_URL=http://schema-registry:8081
 
 # Create the directory for results and set its permissions
 RUN mkdir -p /k6/results && chmod a+rwx /k6/results
-
-WORKDIR /k6
-
 RUN mkdir -p /k6/schemas && chmod a+rwx /k6/schemas
+RUN mkdir -p /k6/infra && chmod a+rwx /k6/infra
+RUN mkdir -p /k6/utils && chmod a+rwx /k6/utils
 
 # Copy the k6 script into the container
 COPY ./k6/kafka/schemas/*.avsc /k6/schemas/
 COPY ./k6/kafka/k6-kafka.js /k6/k6-script.js
+COPY ./k6/kafka/infra/kafka-config.js /k6/infra/kafka-config.js
+COPY ./k6/kafka/utils/ /k6/utils/
+
+WORKDIR /k6
 
 # Declare the volume for results
 VOLUME ["/results"]
@@ -63,6 +66,7 @@ CMD ["run", "extensions", "list"]
 
 # Expose any necessary ports (e.g., for Prometheus metrics or web UI if enabled)
 EXPOSE 6566
+EXPOSE 5665
 
 # Healthcheck (consider if your test is short-lived, otherwise this might fail before test finishes)
 HEALTHCHECK --interval=30s --timeout=60s --start-period=5s --retries=3 CMD k6 status || exit 1

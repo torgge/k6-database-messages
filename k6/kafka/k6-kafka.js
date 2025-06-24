@@ -1,79 +1,36 @@
 /*
 This is a k6 test script that imports the xk6-kafka and
-tests Kafka with a 100 Avro messages per iteration.
+tests Kafka with a 1 Avro message per iteration.
 */
 
-import { check } from "k6";
+import { check, sleep } from "k6";
 import {
-  Writer,
-  Reader,
-  Connection,
-  SchemaRegistry,
-  KEY,
-  VALUE,
-  TOPIC_NAME_STRATEGY,
-  RECORD_NAME_STRATEGY,
-  SCHEMA_TYPE_AVRO,
-  SCHEMA_TYPE_JSON,
-  SCHEMA_TYPE_STRING
+  SCHEMA_TYPE_AVRO
 } from "k6/x/kafka"; // import kafka extension
+import { Trend } from "k6/metrics"; // import k6 metrics
+import * as utils from "./utils/utils.js";
+import { quantityOfMessage } from "./utils/envs.js";
+import {
+  schemaRegistry,
+  writer,
+  reader,
+  keySchemaObject,
+  valueSchemaObject,
+  createTopicIfNotExists,
+  closeAll,
+  deleteTopicMessages
+} from "./infra/kafka-config.js";
 
-const brokers = [__ENV.KAFKA_BROKER || "localhost:9092"];
-const topic = __ENV.KAFKA_TOPIC || "test-topic-avro";
-const registry = __ENV.SCHEMA_REGISTRY_URL || "http://localhost:8081";
-
-const writer = new Writer({
-  brokers: brokers,
-  topic: topic,
-  autoCreateTopic: true,
-});
-const reader = new Reader({
-  brokers: brokers,
-  topic: topic,
-});
-const connection = new Connection({
-  address: brokers[0],
-});
-const schemaRegistry = new SchemaRegistry({
-  url: registry
-});
-
-// Create the topic if it does not exist
-// This is done only once by the first virtual user (VU)
-// to avoid creating the topic multiple times
-// and to ensure that the topic is created before any messages are produced.
-if (__VU == 0) {
-  connection.createTopic({ topic: topic });
-}
-
-const keySchema = open('schemas/order-key.avsc');
-const valueSchema = open('schemas/order-value.avsc');
-
-const keySubjectName = schemaRegistry.getSubjectName({
-  topic: topic,
-  element: KEY,
-  subjectNameStrategy: TOPIC_NAME_STRATEGY,
-  schema: keySchema,
-});
-
-const valueSubjectName = schemaRegistry.getSubjectName({
-  topic: topic,
-  element: VALUE,
-  subjectNameStrategy: TOPIC_NAME_STRATEGY,
-  schema: valueSchema,
-});
-
-const keySchemaObject = schemaRegistry.createSchema({
-  subject: keySubjectName,
-  schema: keySchema,
-  schemaType: SCHEMA_TYPE_AVRO,
-});
-
-const valueSchemaObject = schemaRegistry.createSchema({
-  subject: valueSubjectName,
-  schema: valueSchema,
-  schemaType: SCHEMA_TYPE_AVRO,
-});
+export const options = {
+  stages: [
+    // Ramp up to 5 users over 30 seconds
+    { duration: "30s", target: 5 },
+    // Maintain steady state of 10 users over the next 30 seconds
+    { duration: "30s", target: 10 },
+    // Ramp down to 0 users over the next 30 seconds
+    { duration: "30s", target: 0 },
+  ],
+};
 
 function getItems(index) {
   let items = [];
@@ -88,20 +45,24 @@ function getItems(index) {
   return items;
 }
 
-function uuidv4() {
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-    var r = Math.random() * 16 | 0, v = c === 'x' ? r : (r & 0x3 | 0x8);
-    return v.toString(16);
-  });
+export let produceDuration = new Trend("produce_duration", true);
+
+export function setup() {
+  if (__VU == 0) {
+    createTopicIfNotExists();
+  }
 }
 
 export default function () {
-  for (let index = 0; index < 10; index++) {
+  const start = new Date().getTime();
+
+  for (let index = 0; index < quantityOfMessage; index++) {
+    let correlationId = `${utils.uuidv4()}`;
     let messages = [
       {
         key: schemaRegistry.serialize({
           data: {
-            key: "key-" + index,
+            key: `key-${correlationId}`,
           },
           schema: keySchemaObject,
           schemaType: SCHEMA_TYPE_AVRO,
@@ -109,25 +70,27 @@ export default function () {
         value: schemaRegistry.serialize({
           data: {
             id: index,
-            clientName: "client-" + index,
+            clientName: `client-${index}`,
             items: getItems(index),
           },
           schema: valueSchemaObject,
           schemaType: SCHEMA_TYPE_AVRO,
         }),
         headers: {
-          "correlationId": `${uuidv4()}`,
+          "correlationId": `${correlationId}`,
           "origin": "k6-kafka-test",
           "timestamp": new Date().toISOString()
         }
       },
     ];
     writer.produce({ messages: messages });
+    sleep(1); // Sleep to simulate some delay between message production
   }
+  // Wait for the messages to be produced
+  produceDuration.add(new Date().getTime() - start);
 
-  const quantityOfMessage = 30; // Number of messages to consume
+  let messages = reader.consume({ limit: quantityOfMessage, timeout: 60000 }); // 60 segundos
 
-  let messages = reader.consume({ limit: quantityOfMessage});
   check(messages, {
     [`${quantityOfMessage} message returned`]: (msgs) => msgs.length == quantityOfMessage,
     "key starts with 'key-' string": (msgs) =>
@@ -156,12 +119,10 @@ export default function () {
   });
 }
 
-export function teardown(data) {
+export function teardown() {
   if (__VU == 0) {
     // Delete the topic
-    // connection.deleteTopic(topic);
+    deleteTopicMessages();
   }
-  writer.close();
-  reader.close();
-  connection.close();
+  closeAll();
 }

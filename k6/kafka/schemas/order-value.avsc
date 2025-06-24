@@ -1,7 +1,7 @@
 {
   "type": "record",
-  "name": "value",
-  "namespace": "com.bonespirito.v1.order",
+  "name": "Order",
+  "namespace": "com.bonespirito.selling.order",
   "fields": [
     { "name": "id", "type": "long" },
     { "name": "clientName", "type": "string" },
