@@ -28,5 +28,3 @@ flowchart TD
     RabbitMQ -.->|Depends On| K6
     Kafka -.->|Depends On| K6
     Postgres -.->|Depends On| K6
-
-```mermaid
