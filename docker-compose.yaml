@@ -9,7 +9,7 @@ volumes:
 
 services:
   kafka-k6:
-    image: bitnami/kafka:4.0.0
+    image: soldevelo/kafka:4.0.0
     container_name: kafka-k6
     hostname: kafka-k6
     ports:
